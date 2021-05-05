@@ -80,7 +80,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Tests with TLS enabled.
  */
-@RunWith(Parameterized.class)
+//@RunWith(Parameterized.class)
 public class TestTLS extends BookKeeperClusterTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestPerChannelBookieClient.class);
@@ -109,7 +109,12 @@ public class TestTLS extends BookKeeperClusterTestCase {
                  { "PKCS12", "JKS", false }
             });
     }
-    public TestTLS(String keyStoreFormat,
+
+    public TestTLS() {
+        this("JKS", "JKS", false);
+    }
+
+    private TestTLS(String keyStoreFormat,
                    String trustStoreFormat,
                    boolean useV2Protocol) {
         super(3);
