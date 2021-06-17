@@ -29,3 +29,11 @@ runs:
             echo -e "$(ip addr show eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)\t$(hostname -f) $(hostname -s)" | sudo tee -a /etc/hosts
         fi
       shell: bash
+
+    - name: install libthrift 0.14.2
+      shell: bash
+      run: |
+        cd ~
+        git clone --depth 50 --single-branch --branch 0.14.2  https://github.com/apache/thrift
+        cd thrift/lib/java
+        ./gradlew -Prelease=true install
