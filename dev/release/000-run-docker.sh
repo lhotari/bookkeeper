@@ -24,7 +24,7 @@ fi
 
 set -e -x -u
 
-RC_NUM=$(($1 + 0))
+RC_NUM=$(($1 + 0)) 
 shift
 
 SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
@@ -56,7 +56,7 @@ UserSpecificDocker
 
 BOOKKEEPER_ROOT=${SCRIPT_DIR}/../..
 
-VERSION=`cd $BOOKKEEPER_ROOT && mvn initialize help:evaluate -Dexpression=project.version -pl . -q -DforceStdout | grep -Ev '(^\[|Download\w+:)' | sed 's/^\(.*\)-SNAPSHOT/\1/'`
+VERSION=`cd $BOOKKEEPER_ROOT && mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version | grep -Ev '(^\[|Download\w+:)' | sed 's/^\(.*\)-SNAPSHOT/\1/'`
 versions_list=(`echo $VERSION | tr '.' ' '`)
 major_version=${versions_list[0]}
 minor_version=${versions_list[1]}
@@ -92,8 +92,17 @@ echo 'RC_TAG                    = $RC_TAG'
 echo
 echo 'Before executing any release scripts, PLEASE configure your git to cache your github password:'
 echo
+echo ' // take a backup of ~/.gitconfig, remember to restore it after the release process'
+echo ' \$ cp ~/.gitconfig ~/.gitconfig.bak.\$(date -I)'
+echo ' // remove any previous credential helper configuration'
+echo ' \$ git config --global -l --name-only | grep credential | uniq | xargs -i{} git config --global --unset-all {}'
+echo ' // fix permission warning with git in docker on MacOS'
+echo ' \$ git config --global safe.directory $PWD'
 echo ' // configure credential helper to cache your github password for 1 hr during the whole release process '
 echo ' \$ git config --global credential.helper \"cache --timeout=3600\" '
+echo ' // in another terminal get a GitHub token to be used as a password for the release process, assuming you are using GitHub CLI.'
+echo ' \$ gh auth token '
+echo ' // attempt to push to apache remote to cache your password'
 echo ' \$ git push apache --dry-run '
 echo
 bash
