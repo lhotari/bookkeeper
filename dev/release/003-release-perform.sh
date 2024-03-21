@@ -24,4 +24,4 @@ cd $BK_HOME
 
 mvn release:perform \
     -Darguments="-Dmaven.javadoc.skip=true -DskipTests=true" \
-    -Dresume=true
+    -Dresume=true "$@"
