@@ -580,6 +580,12 @@ public class BookieRequestProcessor implements RequestProcessor {
             response.setStatus(BookkeeperProtocol.StatusCode.EBADREQ);
             writeAndFlush(c, response.build());
         } else {
+            LOG.info("Starting TLS handshake with client on channel {}", c);
+            if (c.pipeline().names().contains(BookieNettyServer.CONSOLIDATION_HANDLER_NAME)) {
+                LOG.info("Removing consolidation handler from the pipeline");
+                c.pipeline().remove(BookieNettyServer.CONSOLIDATION_HANDLER_NAME);
+            }
+
             // there is no need to execute in a different thread as this operation is light
             SslHandler sslHandler = shFactory.newTLSHandler();
             c.pipeline().addFirst("tls", sslHandler);
@@ -616,6 +622,10 @@ public class BookieRequestProcessor implements RequestProcessor {
                             bkStats.getOpStats(BKStats.STATS_UNKNOWN).incrementFailedOps();
                         }
                     }
+                    // add back the consolidation handler
+                    LOG.info("Adding consolidation handler back to the pipeline");
+                    c.pipeline().addFirst(BookieNettyServer.CONSOLIDATION_HANDLER_NAME,
+                            BookieNettyServer.createFlushConsolidationHandler());
                 }
             });
             writeAndFlush(c, response.build());
