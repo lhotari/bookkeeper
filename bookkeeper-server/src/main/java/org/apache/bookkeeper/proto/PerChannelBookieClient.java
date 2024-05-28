@@ -33,6 +33,7 @@ import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -174,6 +175,7 @@ public class PerChannelBookieClient extends ChannelInboundHandlerAdapter {
                         BKException.Code.WriteOnReadOnlyBookieException));
     private static final int DEFAULT_HIGH_PRIORITY_VALUE = 100; // We may add finer grained priority later.
     private static final AtomicLong txnIdGenerator = new AtomicLong(0);
+    static final String CONSOLIDATION_HANDLER_NAME = "consolidation";
 
     final BookieId bookieId;
     final BookieAddressResolver bookieAddressResolver;
@@ -594,7 +596,7 @@ public class PerChannelBookieClient extends ChannelInboundHandlerAdapter {
             @Override
             protected void initChannel(Channel ch) throws Exception {
                 ChannelPipeline pipeline = ch.pipeline();
-                pipeline.addLast("consolidation", new FlushConsolidationHandler(1024, true));
+                pipeline.addLast(CONSOLIDATION_HANDLER_NAME, createFlushConsolidationHandler());
                 pipeline.addLast("bytebufList", ByteBufList.ENCODER);
                 pipeline.addLast("lengthbasedframedecoder",
                         new LengthFieldBasedFrameDecoder(maxFrameSize, 0, 4, 0, 4));
@@ -617,6 +619,10 @@ public class PerChannelBookieClient extends ChannelInboundHandlerAdapter {
         future.addListener(contextPreservingListener(new ConnectionFutureListener(startTime)));
         future.addListener(x -> makeWritable());
         return future;
+    }
+
+    private static FlushConsolidationHandler createFlushConsolidationHandler() {
+        return new FlushConsolidationHandler(1024, true);
     }
 
     void cleanDisconnectAndClose() {
@@ -1522,11 +1528,17 @@ public class PerChannelBookieClient extends ChannelInboundHandlerAdapter {
         } else {
             throw new RuntimeException("Unexpected socket address type");
         }
+        LOG.info("Starting TLS handshake with {}:{}", address.getHostString(), address.getPort());
+        if (channel.pipeline().names().contains(BookieNettyServer.CONSOLIDATION_HANDLER_NAME)) {
+            channel.pipeline().remove(CONSOLIDATION_HANDLER_NAME);
+        }
         SslHandler handler = parentObj.shFactory.newTLSHandler(address.getHostName(), address.getPort());
         channel.pipeline().addFirst(parentObj.shFactory.getHandlerName(), handler);
         handler.handshakeFuture().addListener(new GenericFutureListener<Future<Channel>>() {
                 @Override
                 public void operationComplete(Future<Channel> future) throws Exception {
+                    channel.pipeline().addFirst(CONSOLIDATION_HANDLER_NAME, createFlushConsolidationHandler());
+
                     int rc;
                     Queue<GenericCallback<PerChannelBookieClient>> oldPendingOps;
 
