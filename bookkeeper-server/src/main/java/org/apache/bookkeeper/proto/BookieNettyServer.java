@@ -49,7 +49,6 @@ import io.netty.channel.local.LocalServerChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import io.netty.handler.flush.FlushConsolidationHandler;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.incubator.channel.uring.IOUringEventLoopGroup;
 import io.netty.incubator.channel.uring.IOUringServerSocketChannel;
@@ -343,8 +342,6 @@ class BookieNettyServer {
                     BookieSideConnectionPeerContextHandler contextHandler =
                         new BookieSideConnectionPeerContextHandler();
                     ChannelPipeline pipeline = ch.pipeline();
-
-                    pipeline.addLast("consolidation", new FlushConsolidationHandler(1024, true));
 
                     pipeline.addLast("bytebufList", ByteBufList.ENCODER);
 
