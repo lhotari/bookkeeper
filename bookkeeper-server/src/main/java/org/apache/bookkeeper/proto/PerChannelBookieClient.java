@@ -1523,6 +1523,7 @@ public class PerChannelBookieClient extends ChannelInboundHandlerAdapter {
             throw new RuntimeException("Unexpected socket address type");
         }
         SslHandler handler = parentObj.shFactory.newTLSHandler(address.getHostName(), address.getPort());
+        channel.pipeline().addFirst("slicer", new SlicerHandler());
         channel.pipeline().addFirst(parentObj.shFactory.getHandlerName(), handler);
         handler.handshakeFuture().addListener(new GenericFutureListener<Future<Channel>>() {
                 @Override

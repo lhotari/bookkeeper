@@ -578,6 +578,7 @@ public class BookieRequestProcessor implements RequestProcessor {
         } else {
             // there is no need to execute in a different thread as this operation is light
             SslHandler sslHandler = shFactory.newTLSHandler();
+            c.pipeline().addFirst("slicer", new SlicerHandler());
             c.pipeline().addFirst("tls", sslHandler);
 
             response.setStatus(BookkeeperProtocol.StatusCode.EOK);
@@ -738,4 +739,5 @@ public class BookieRequestProcessor implements RequestProcessor {
     private static void writeAndFlush(Channel channel, Object msg) {
         NettyChannelUtil.writeAndFlushWithVoidPromise(channel, msg);
     }
+
 }
