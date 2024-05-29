@@ -92,7 +92,6 @@ import org.slf4j.LoggerFactory;
 class BookieNettyServer {
 
     private static final Logger LOG = LoggerFactory.getLogger(BookieNettyServer.class);
-    public static final String CONSOLIDATION_HANDLER_NAME = "consolidation";
 
     final int maxFrameSize;
     final ServerConfiguration conf;
@@ -345,7 +344,7 @@ class BookieNettyServer {
                         new BookieSideConnectionPeerContextHandler();
                     ChannelPipeline pipeline = ch.pipeline();
 
-                    pipeline.addLast(CONSOLIDATION_HANDLER_NAME, new FlushConsolidationHandler(1024, true));
+                    pipeline.addLast("consolidation", new FlushConsolidationHandler(1024, true));
 
                     pipeline.addLast("bytebufList", ByteBufList.ENCODER);
 
