@@ -1578,9 +1578,12 @@ public class PerChannelBookieClient extends ChannelInboundHandlerAdapter {
         SslHandler sslHandler = parentObj.shFactory.newTLSHandler(address.getHostName(), address.getPort());
         String sslHandlerName = parentObj.shFactory.getHandlerName();
         if (channel.pipeline().names().contains(CONSOLIDATION_HANDLER_NAME)) {
+            channel.pipeline().addAfter(BookieNettyServer.CONSOLIDATION_HANDLER_NAME, SlicerHandler.NAME,
+                    new SlicerHandler());
             channel.pipeline().addAfter(CONSOLIDATION_HANDLER_NAME, sslHandlerName, sslHandler);
         } else {
             // local transport doesn't contain FlushConsolidationHandler
+            channel.pipeline().addFirst(SlicerHandler.NAME, new SlicerHandler());
             channel.pipeline().addFirst(sslHandlerName, sslHandler);
         }
         sslHandler.handshakeFuture().addListener(new GenericFutureListener<Future<Channel>>() {

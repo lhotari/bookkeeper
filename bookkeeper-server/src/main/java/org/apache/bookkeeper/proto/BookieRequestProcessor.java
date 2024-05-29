@@ -585,9 +585,12 @@ public class BookieRequestProcessor implements RequestProcessor {
             // there is no need to execute in a different thread as this operation is light
             SslHandler sslHandler = shFactory.newTLSHandler();
             if (c.pipeline().names().contains(BookieNettyServer.CONSOLIDATION_HANDLER_NAME)) {
+                c.pipeline().addAfter(BookieNettyServer.CONSOLIDATION_HANDLER_NAME, SlicerHandler.NAME,
+                        new SlicerHandler());
                 c.pipeline().addAfter(BookieNettyServer.CONSOLIDATION_HANDLER_NAME, TLS_HANDLER_NAME, sslHandler);
             } else {
                 // local transport doesn't contain FlushConsolidationHandler
+                c.pipeline().addFirst(SlicerHandler.NAME, new SlicerHandler());
                 c.pipeline().addFirst(TLS_HANDLER_NAME, sslHandler);
             }
 
@@ -752,4 +755,5 @@ public class BookieRequestProcessor implements RequestProcessor {
     private static void writeAndFlush(Channel channel, Object msg) {
         NettyChannelUtil.writeAndFlushWithVoidPromise(channel, msg);
     }
+
 }
